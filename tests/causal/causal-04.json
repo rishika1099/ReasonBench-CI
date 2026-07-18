@@ -1,0 +1,14 @@
+{
+  "id": "causal-04",
+  "category": "causal",
+  "difficulty": 2,
+  "input": "[causal] If x=17 and y=5, and the total budget is 44, reason step by step and give only the final number.",
+  "expected_answer": "129",
+  "forbidden_patterns": [
+    "as an AI",
+    "I cannot",
+    "impossible to say"
+  ],
+  "max_tokens": 450,
+  "runs": 5
+}

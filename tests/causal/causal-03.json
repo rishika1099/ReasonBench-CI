@@ -1,0 +1,14 @@
+{
+  "id": "causal-03",
+  "category": "causal",
+  "difficulty": 1,
+  "input": "[causal] If x=3 and y=9, and the total budget is 31, reason step by step and give only the final number.",
+  "expected_answer": "58",
+  "forbidden_patterns": [
+    "as an AI",
+    "I cannot",
+    "impossible to say"
+  ],
+  "max_tokens": 350,
+  "runs": 5
+}

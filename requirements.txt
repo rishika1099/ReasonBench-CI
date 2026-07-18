@@ -1,0 +1,3 @@
+# Core experiments and dashboards use the Python 3 standard library only.
+# Optional: to evaluate real models via providers.py, no SDKs are needed either
+# (providers.py uses urllib). Just set the relevant API key in your environment.

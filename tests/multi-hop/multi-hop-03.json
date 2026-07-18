@@ -1,0 +1,14 @@
+{
+  "id": "multi-hop-03",
+  "category": "multi-hop",
+  "difficulty": 1,
+  "input": "[multi-hop] If x=17 and y=9, and the total budget is 22, reason step by step and give only the final number.",
+  "expected_answer": "175",
+  "forbidden_patterns": [
+    "as an AI",
+    "I cannot",
+    "impossible to say"
+  ],
+  "max_tokens": 350,
+  "runs": 5
+}

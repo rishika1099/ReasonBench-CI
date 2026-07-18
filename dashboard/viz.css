@@ -1,0 +1,137 @@
+/* Shared dashboard styles for the LLM systems portfolio.
+   Palette roles follow the validated reference palette (light + dark). */
+
+:root {
+  --surface-1: #fcfcfb;
+  --page: #f9f9f7;
+  --ink-1: #0b0b0b;
+  --ink-2: #52514e;
+  --ink-muted: #898781;
+  --grid: #e1e0d9;
+  --baseline: #c3c2b7;
+  --border: rgba(11, 11, 11, 0.10);
+  --good-text: #006300;
+  --s1: #2a78d6;
+  --s2: #1baf7a;
+  --s3: #eda100;
+  --s4: #008300;
+  --s5: #4a3aa7;
+  --s6: #e34948;
+  --s7: #e87ba4;
+  --s8: #eb6834;
+  --status-good: #0ca30c;
+  --status-warn: #fab219;
+  --status-serious: #ec835a;
+  --status-critical: #d03b3b;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --surface-1: #1a1a19;
+    --page: #0d0d0d;
+    --ink-1: #ffffff;
+    --ink-2: #c3c2b7;
+    --ink-muted: #898781;
+    --grid: #2c2c2a;
+    --baseline: #383835;
+    --border: rgba(255, 255, 255, 0.10);
+    --good-text: #0ca30c;
+    --s1: #3987e5;
+    --s2: #199e70;
+    --s3: #c98500;
+    --s4: #008300;
+    --s5: #9085e9;
+    --s6: #e66767;
+    --s7: #d55181;
+    --s8: #d95926;
+  }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--page);
+  color: var(--ink-1);
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.wrap { max-width: 1180px; margin: 0 auto; padding: 28px 24px 64px; }
+
+header.page-head { margin-bottom: 20px; }
+header.page-head h1 { font-size: 22px; margin: 0 0 4px; letter-spacing: -0.01em; }
+header.page-head p { margin: 0; color: var(--ink-2); max-width: 72ch; }
+header.page-head a { color: var(--s1); text-decoration: none; }
+header.page-head a:hover { text-decoration: underline; }
+.crumb { font-size: 12px; color: var(--ink-muted); margin-bottom: 10px; }
+.crumb a { color: var(--ink-muted); }
+
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin: 18px 0 22px; }
+.tile {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 16px;
+}
+.tile .k { font-size: 12px; color: var(--ink-2); margin-bottom: 4px; }
+.tile .v { font-size: 26px; font-weight: 650; letter-spacing: -0.01em; }
+.tile .d { font-size: 12px; color: var(--ink-muted); margin-top: 2px; }
+.tile .d.up { color: var(--good-text); }
+.tile .d.down { color: var(--status-critical); }
+
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+@media (max-width: 860px) { .grid2 { grid-template-columns: 1fr; } }
+
+.card {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px 18px 12px;
+  margin-bottom: 14px;
+}
+.card h2 { font-size: 15px; margin: 0 0 2px; }
+.card .sub { font-size: 12.5px; color: var(--ink-2); margin: 0 0 10px; }
+
+table.data { width: 100%; border-collapse: collapse; font-size: 13px; }
+table.data th {
+  text-align: left; font-weight: 600; color: var(--ink-2);
+  border-bottom: 1px solid var(--baseline); padding: 6px 10px 6px 0;
+}
+table.data td {
+  padding: 6px 10px 6px 0;
+  border-bottom: 1px solid var(--grid);
+  font-variant-numeric: tabular-nums;
+}
+table.data td.num, table.data th.num { text-align: right; }
+table.data tr:last-child td { border-bottom: none; }
+
+.pill {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 12px; padding: 1px 8px; border-radius: 999px;
+  border: 1px solid var(--border);
+}
+.pill::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.pill.good { color: var(--good-text); }
+.pill.bad { color: var(--status-critical); }
+.pill.warn { color: var(--status-serious); }
+
+.viz-tip {
+  position: absolute; pointer-events: none; z-index: 20;
+  background: var(--surface-1); border: 1px solid var(--border);
+  border-radius: 8px; padding: 7px 10px; font-size: 12px;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.12);
+  color: var(--ink-1); white-space: nowrap; display: none;
+}
+.viz-tip .t { font-weight: 600; margin-bottom: 2px; }
+.viz-tip .r { display: flex; align-items: center; gap: 6px; color: var(--ink-2); }
+.viz-tip .r .sw { width: 8px; height: 8px; border-radius: 2px; }
+.viz-tip .r b { color: var(--ink-1); font-variant-numeric: tabular-nums; }
+
+.viz-legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12px; color: var(--ink-2); margin: 2px 0 8px; }
+.viz-legend .li { display: inline-flex; align-items: center; gap: 6px; }
+.viz-legend .sw { width: 9px; height: 9px; border-radius: 2px; }
+
+.chart-box { position: relative; }
+svg text { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }

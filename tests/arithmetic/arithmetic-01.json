@@ -1,0 +1,14 @@
+{
+  "id": "arithmetic-01",
+  "category": "arithmetic",
+  "difficulty": 2,
+  "input": "[arithmetic] If x=19 and y=5, and the total budget is 22, reason step by step and give only the final number.",
+  "expected_answer": "117",
+  "forbidden_patterns": [
+    "as an AI",
+    "I cannot",
+    "impossible to say"
+  ],
+  "max_tokens": 450,
+  "runs": 5
+}

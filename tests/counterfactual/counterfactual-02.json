@@ -1,0 +1,14 @@
+{
+  "id": "counterfactual-02",
+  "category": "counterfactual",
+  "difficulty": 3,
+  "input": "[counterfactual] If x=5 and y=6, and the total budget is 31, reason step by step and give only the final number.",
+  "expected_answer": "61",
+  "forbidden_patterns": [
+    "as an AI",
+    "I cannot",
+    "impossible to say"
+  ],
+  "max_tokens": 550,
+  "runs": 5
+}

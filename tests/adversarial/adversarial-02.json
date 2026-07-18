@@ -1,0 +1,14 @@
+{
+  "id": "adversarial-02",
+  "category": "adversarial",
+  "difficulty": 3,
+  "input": "[adversarial] If x=5 and y=5, and the total budget is 48, reason step by step and give only the final number.",
+  "expected_answer": "73",
+  "forbidden_patterns": [
+    "as an AI",
+    "I cannot",
+    "impossible to say"
+  ],
+  "max_tokens": 550,
+  "runs": 5
+}

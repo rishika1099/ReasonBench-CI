@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ReasonBench CI</title>
+<link rel="stylesheet" href="viz.css">
+</head>
+<body>
+<div class="wrap">
+  <header class="page-head">
+    <div class="crumb">LLM Systems Portfolio / 02</div>
+    <h1>ReasonBench CI</h1>
+    <p>Reasoning regression suite: baseline v1.0 vs candidate v1.1-rc. The CI gate fails the deploy if any category regresses beyond the threshold.</p>
+  </header>
+
+  <div class="tiles" id="tiles"></div>
+
+  <div class="card">
+    <h2>Pass rate by category</h2>
+    <p class="sub">candidate improves arithmetic and multi-hop but regresses temporal and instruction-following</p>
+    <div id="c-cat"></div>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <h2>Regression delta (candidate minus baseline)</h2>
+      <p class="sub">points of pass rate; red bars below the gate fail CI</p>
+      <div id="c-diff"></div>
+    </div>
+    <div class="card">
+      <h2>Failure kinds, candidate</h2>
+      <p class="sub">what actually went wrong across all runs</p>
+      <div id="c-fail"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Worst tests (candidate)</h2>
+    <p class="sub">lowest pass rate across repeated runs; inconsistent means answers flipped between runs</p>
+    <div id="t-worst"></div>
+  </div>
+</div>
+
+<script src="data.js"></script>
+<script src="charts.js"></script>
+<script>
+const D = window.DATA, C = window.Charts;
+const verdictPill = D.verdict === "PASS"
+  ? '<span class="pill good">PASS</span>' : '<span class="pill bad">FAIL</span>';
+
+C.tiles(document.getElementById("tiles"), [
+  { k: "CI verdict", v: verdictPill, d: "gate: no category drop > " + D.gate_pts + " pts" },
+  { k: "Suite size", v: D.n_tests + " tests", d: D.runs_per_test + " runs each" },
+  { k: "Overall pass, v1.0", v: D.overall["v1.0"] + "%" },
+  { k: "Overall pass, v1.1-rc", v: D.overall["v1.1-rc"] + "%",
+    d: (D.overall["v1.1-rc"] - D.overall["v1.0"]).toFixed(1) + " pts vs baseline",
+    dir: D.overall["v1.1-rc"] >= D.overall["v1.0"] ? "up" : "down" },
+  { k: "Flaky tests", v: D.flaky_tests.length, d: "pass rate strictly between 0 and 1" },
+]);
+
+C.groupedBar(document.getElementById("c-cat"), {
+  labels: D.categories,
+  series: [
+    { name: "v1.0", values: D.categories.map(c => D.by_category["v1.0"][c].pass_pct) },
+    { name: "v1.1-rc", values: D.categories.map(c => D.by_category["v1.1-rc"][c].pass_pct) },
+  ], unit: "%", height: 260,
+});
+
+const diffs = D.categories.map(c => D.diff[c]);
+const shifted = diffs.map(d => d + 50);  // render around a midline
+C.bar(document.getElementById("c-diff"), {
+  labels: D.categories, values: diffs.map(Math.abs),
+  color: D.categories.map(c => D.diff[c] < -D.gate_pts ? "var(--status-critical)" : (D.diff[c] < 0 ? "var(--status-serious)" : "var(--s2)")),
+  unit: "pts", showValues: true, digits: 1, height: 240,
+});
+document.querySelector("#c-diff").insertAdjacentHTML("afterend",
+  '<p class="sub">bar height is the magnitude of the delta; green = improved, orange = small drop, red = beyond the CI gate</p>');
+
+const kinds = [...new Set([...Object.keys(D.failure_hist["v1.0"]), ...Object.keys(D.failure_hist["v1.1-rc"])])];
+C.groupedBar(document.getElementById("c-fail"), {
+  labels: kinds.map(k => k.replace(/_/g, " ")),
+  series: [
+    { name: "v1.0", values: kinds.map(k => D.failure_hist["v1.0"][k] || 0) },
+    { name: "v1.1-rc", values: kinds.map(k => D.failure_hist["v1.1-rc"][k] || 0) },
+  ], height: 240,
+});
+
+C.table(document.getElementById("t-worst"),
+  [{ key: "id", label: "Test" }, { key: "category", label: "Category" },
+   { key: "pr", label: "Pass rate", num: true }, { key: "cons", label: "Consistent" },
+   { key: "kinds", label: "Failure kinds" }],
+  D.worst_tests.map(r => ({
+    id: r.id, category: r.category, pr: (r.pass_rate * 100).toFixed(0) + "%",
+    cons: r.consistent ? "yes" : '<span class="pill warn">flipped</span>',
+    kinds: r.failure_kinds.join(", ") || "-",
+  })));
+</script>
+</body>
+</html>

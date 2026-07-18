@@ -1,0 +1,14 @@
+{
+  "id": "counterfactual-00",
+  "category": "counterfactual",
+  "difficulty": 1,
+  "input": "[counterfactual] If x=3 and y=3, and the total budget is 40, reason step by step and give only the final number.",
+  "expected_answer": "49",
+  "forbidden_patterns": [
+    "as an AI",
+    "I cannot",
+    "impossible to say"
+  ],
+  "max_tokens": 350,
+  "runs": 5
+}

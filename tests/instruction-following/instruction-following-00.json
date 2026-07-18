@@ -1,0 +1,14 @@
+{
+  "id": "instruction-following-00",
+  "category": "instruction-following",
+  "difficulty": 1,
+  "input": "[instruction-following] If x=15 and y=3, and the total budget is 36, reason step by step and give only the final number.",
+  "expected_answer": "81",
+  "forbidden_patterns": [
+    "as an AI",
+    "I cannot",
+    "impossible to say"
+  ],
+  "max_tokens": 350,
+  "runs": 5
+}

@@ -1,0 +1,14 @@
+{
+  "id": "temporal-04",
+  "category": "temporal",
+  "difficulty": 2,
+  "input": "[temporal] If x=9 and y=6, and the total budget is 32, reason step by step and give only the final number.",
+  "expected_answer": "86",
+  "forbidden_patterns": [
+    "as an AI",
+    "I cannot",
+    "impossible to say"
+  ],
+  "max_tokens": 450,
+  "runs": 5
+}
