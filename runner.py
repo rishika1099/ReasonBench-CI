@@ -1,12 +1,19 @@
 """ReasonBench CI: spec loader, model interface, checks, and test runner."""
 
 import glob
+import hashlib
 import json
 import os
 import random
 import re
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+
+
+def stable_seed(*parts):
+    """Deterministic across processes, unlike the built-in hash() of strings
+    (which is salted by PYTHONHASHSEED). Keeps experiments reproducible."""
+    return int(hashlib.md5("|".join(map(str, parts)).encode()).hexdigest()[:8], 16)
 
 CATEGORIES = ["arithmetic", "causal", "counterfactual", "temporal",
               "multi-hop", "instruction-following", "adversarial"]
@@ -87,7 +94,7 @@ class SimulatedModel(Model):
         self.p = self.PROFILES[version]
 
     def generate(self, prompt: str, seed: int):
-        rng = random.Random(hash((self.name, prompt, seed)) & 0xFFFFFFFF)
+        rng = random.Random(stable_seed(self.name, prompt, seed))
         cat = re.match(r"\[([a-z-]+)\]", prompt).group(1)
         m = re.search(r"x=(\d+) and y=(\d+).*budget is (\d+)", prompt)
         a, b, c = map(int, m.groups())
