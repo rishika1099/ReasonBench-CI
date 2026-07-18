@@ -49,3 +49,18 @@ open dashboard/index.html
 
 Exit code is nonzero if the candidate version regresses more than 3 points on any
 category, which is the CI gate.
+
+## Evaluate against a real model
+
+`providers.py` (vendored, standard-library only) is a unified adapter for
+**OpenAI, Anthropic (Claude), Google Gemini, and xAI (Grok)**. Set the relevant
+key and the simulated backend can be swapped for a live model:
+
+```bash
+export ANTHROPIC_API_KEY=sk-ant-...   # or OPENAI_API_KEY / GEMINI_API_KEY / XAI_API_KEY
+python3 -c "from providers import chat; print(chat('anthropic','claude-sonnet-5','Say hi'))"
+```
+
+The simulated path remains the default so the repo runs with zero cost and no keys.
+Real calls hit paid third-party APIs; nothing contacts a network unless you pass a
+provider explicitly.
