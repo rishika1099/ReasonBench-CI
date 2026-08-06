@@ -11,90 +11,110 @@
   <header class="page-head">
     <div class="crumb">LLM Systems Portfolio / 02</div>
     <h1>ReasonBench CI</h1>
-    <p>Reasoning regression suite: baseline v1.0 vs candidate v1.1-rc. The CI gate fails the deploy if any category regresses beyond the threshold.</p>
+    <p id="sub">Reasoning regression suite run against <strong>real models</strong>. Each model is a version under test; the CI gate fails a candidate that regresses beyond the threshold on any category.</p>
   </header>
 
   <div class="tiles" id="tiles"></div>
 
   <div class="card">
-    <h2>Pass rate by category</h2>
-    <p class="sub">candidate improves arithmetic and multi-hop but regresses temporal and instruction-following</p>
+    <h2>Pass rate by reasoning category</h2>
+    <p class="sub">every item has a verifiable answer; scoring is exact-match, not judged</p>
     <div id="c-cat"></div>
   </div>
 
   <div class="grid2">
     <div class="card">
-      <h2>Regression delta (candidate minus baseline)</h2>
-      <p class="sub">points of pass rate; red bars below the gate fail CI</p>
-      <div id="c-diff"></div>
+      <h2>Overall pass rate</h2>
+      <p class="sub">across all tests and repeats</p>
+      <div id="c-overall"></div>
     </div>
     <div class="card">
-      <h2>Failure kinds, candidate</h2>
-      <p class="sub">what actually went wrong across all runs</p>
-      <div id="c-fail"></div>
+      <h2>Answer consistency</h2>
+      <p class="sub">share of tests giving the identical answer on every repeat</p>
+      <div id="c-consistency"></div>
     </div>
   </div>
 
   <div class="card">
-    <h2>Worst tests (candidate)</h2>
-    <p class="sub">lowest pass rate across repeated runs; inconsistent means answers flipped between runs</p>
-    <div id="t-worst"></div>
+    <h2>CI regression gate</h2>
+    <p class="sub" id="gate-sub"></p>
+    <div id="t-gate"></div>
+  </div>
+
+  <div class="card">
+    <h2>Actual failures</h2>
+    <p class="sub">real wrong answers returned by the models</p>
+    <div id="t-fail"></div>
   </div>
 </div>
 
 <script src="data.js"></script>
 <script src="charts.js"></script>
 <script>
-const D = window.DATA, C = window.Charts;
-const verdictPill = D.verdict === "PASS"
-  ? '<span class="pill good">PASS</span>' : '<span class="pill bad">FAIL</span>';
+const D = window.DATA, C = window.Charts, R = D.results;
+const M = D.models, short = m => m.split(":")[1] || m;
 
+document.getElementById("sub").innerHTML +=
+  ` <strong>${D.n_tests} tests x ${D.runs_per_test} runs</strong> per model, ${D.generated_at}.`;
+
+const best = M.reduce((a,b)=> R[a].overall_pct >= R[b].overall_pct ? a : b);
+const worst = M.reduce((a,b)=> R[a].overall_pct <= R[b].overall_pct ? a : b);
+const anyFail = Object.values(D.gate || {}).some(g => g.verdict === "FAIL");
 C.tiles(document.getElementById("tiles"), [
-  { k: "CI verdict", v: verdictPill, d: "gate: no category drop > " + D.gate_pts + " pts" },
-  { k: "Suite size", v: D.n_tests + " tests", d: D.runs_per_test + " runs each" },
-  { k: "Overall pass, v1.0", v: D.overall["v1.0"] + "%" },
-  { k: "Overall pass, v1.1-rc", v: D.overall["v1.1-rc"] + "%",
-    d: (D.overall["v1.1-rc"] - D.overall["v1.0"]).toFixed(1) + " pts vs baseline",
-    dir: D.overall["v1.1-rc"] >= D.overall["v1.0"] ? "up" : "down" },
-  { k: "Flaky tests", v: D.flaky_tests.length, d: "pass rate strictly between 0 and 1" },
+  { k: "Data source", v: "Real", d: "live API calls, verifiable answers" },
+  { k: "Best model", v: R[best].overall_pct + "%", d: short(best), dir: "up" },
+  { k: "Spread", v: (R[best].overall_pct - R[worst].overall_pct).toFixed(1) + " pts",
+    d: `${short(best)} vs ${short(worst)}` },
+  { k: "CI gate", v: anyFail ? '<span class="pill bad">FAIL</span>' : '<span class="pill good">PASS</span>',
+    d: "no category may drop > " + D.gate_pts + " pts" },
 ]);
 
 C.groupedBar(document.getElementById("c-cat"), {
   labels: D.categories,
-  series: [
-    { name: "v1.0", values: D.categories.map(c => D.by_category["v1.0"][c].pass_pct) },
-    { name: "v1.1-rc", values: D.categories.map(c => D.by_category["v1.1-rc"][c].pass_pct) },
-  ], unit: "%", height: 260,
+  series: M.map(m => ({ name: short(m), values: D.categories.map(c => R[m].by_category[c] ?? 0) })),
+  unit: "%", height: 270,
+});
+C.bar(document.getElementById("c-overall"), {
+  labels: M.map(short), values: M.map(m => R[m].overall_pct),
+  unit: "%", showValues: true, digits: 1, color: "var(--s1)",
+});
+C.bar(document.getElementById("c-consistency"), {
+  labels: M.map(short), values: M.map(m => R[m].consistency_pct),
+  unit: "%", showValues: true, digits: 1, color: "var(--s2)",
 });
 
-const diffs = D.categories.map(c => D.diff[c]);
-const shifted = diffs.map(d => d + 50);  // render around a midline
-C.bar(document.getElementById("c-diff"), {
-  labels: D.categories, values: diffs.map(Math.abs),
-  color: D.categories.map(c => D.diff[c] < -D.gate_pts ? "var(--status-critical)" : (D.diff[c] < 0 ? "var(--status-serious)" : "var(--s2)")),
-  unit: "pts", showValues: true, digits: 1, height: 240,
-});
-document.querySelector("#c-diff").insertAdjacentHTML("afterend",
-  '<p class="sub">bar height is the magnitude of the delta; green = improved, orange = small drop, red = beyond the CI gate</p>');
+document.getElementById("gate-sub").textContent =
+  `baseline: ${short(D.baseline)} — candidates are compared against it per category`;
+const gateRows = Object.keys(D.gate || {}).map(m => ({
+  m: short(m),
+  v: D.gate[m].verdict === "PASS" ? '<span class="pill good">PASS</span>'
+                                  : '<span class="pill bad">FAIL</span>',
+  r: Object.keys(D.gate[m].regressions).length
+       ? Object.entries(D.gate[m].regressions).map(([c,d])=>`${c} ${d}`).join(", ")
+       : "none",
+}));
+if (gateRows.length) {
+  C.table(document.getElementById("t-gate"),
+    [{key:"m",label:"Candidate"},{key:"v",label:"Verdict"},{key:"r",label:"Category regressions (pts)"}],
+    gateRows);
+} else {
+  document.getElementById("t-gate").innerHTML = '<p class="sub">only one model run — nothing to compare</p>';
+}
 
-const kinds = [...new Set([...Object.keys(D.failure_hist["v1.0"]), ...Object.keys(D.failure_hist["v1.1-rc"])])];
-C.groupedBar(document.getElementById("c-fail"), {
-  labels: kinds.map(k => k.replace(/_/g, " ")),
-  series: [
-    { name: "v1.0", values: kinds.map(k => D.failure_hist["v1.0"][k] || 0) },
-    { name: "v1.1-rc", values: kinds.map(k => D.failure_hist["v1.1-rc"][k] || 0) },
-  ], height: 240,
-});
-
-C.table(document.getElementById("t-worst"),
-  [{ key: "id", label: "Test" }, { key: "category", label: "Category" },
-   { key: "pr", label: "Pass rate", num: true }, { key: "cons", label: "Consistent" },
-   { key: "kinds", label: "Failure kinds" }],
-  D.worst_tests.map(r => ({
-    id: r.id, category: r.category, pr: (r.pass_rate * 100).toFixed(0) + "%",
-    cons: r.consistent ? "yes" : '<span class="pill warn">flipped</span>',
-    kinds: r.failure_kinds.join(", ") || "-",
-  })));
+const fails = [];
+M.forEach(m => (R[m].failures || []).forEach(f => fails.push({
+  model: short(m), id: f.id, category: f.category,
+  expected: f.expected, got: (f.got || "(empty)").replace(/</g,"&lt;").slice(0,60),
+  pr: f.pass_rate + "%",
+})));
+if (fails.length) {
+  C.table(document.getElementById("t-fail"),
+    [{key:"model",label:"Model"},{key:"id",label:"Test"},{key:"category",label:"Category"},
+     {key:"expected",label:"Expected"},{key:"got",label:"Model answered"},{key:"pr",label:"Pass rate",num:true}],
+    fails);
+} else {
+  document.getElementById("t-fail").innerHTML = '<p class="sub">no failures — every test passed on every run</p>';
+}
 </script>
 </body>
 </html>

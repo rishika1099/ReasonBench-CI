@@ -23,16 +23,18 @@ provider. It never runs on import and is never on the default path.
 
 import json
 import os
+import re
 import time
 import urllib.error
 import urllib.request
 
 # Sensible current defaults per provider; override by passing an explicit model.
+# Anthropic model IDs: claude-opus-4-8, claude-sonnet-5, claude-haiku-4-5.
 DEFAULT_MODELS = {
     "openai": "gpt-4o",
     "anthropic": "claude-sonnet-5",
-    "gemini": "gemini-2.0-flash",
-    "grok": "grok-2-latest",
+    "gemini": "gemini-2.5-flash",
+    "grok": "grok-4.3",
 }
 
 _ENDPOINTS = {
@@ -63,14 +65,29 @@ def _key(provider):
     return k
 
 
-def _post(url, headers, payload, timeout=60):
+def _retry_delay(body_text, default):
+    """Honor a server-provided retry delay (Gemini RetryInfo / Retry-After)."""
+    m = re.search(r'"retryDelay"\s*:\s*"(\d+)s"', body_text)
+    return int(m.group(1)) if m else default
+
+
+def _post(url, headers, payload, timeout=60, max_retries=4):
     data = json.dumps(payload).encode()
-    req = urllib.request.Request(url, data=data, headers=headers, method="POST")
-    try:
-        with urllib.request.urlopen(req, timeout=timeout) as r:
-            return json.loads(r.read())
-    except urllib.error.HTTPError as e:
-        raise ProviderError(f"HTTP {e.code}: {e.read().decode()[:300]}")
+    backoff = 5
+    for attempt in range(max_retries + 1):
+        req = urllib.request.Request(url, data=data, headers=headers, method="POST")
+        try:
+            with urllib.request.urlopen(req, timeout=timeout) as r:
+                return json.loads(r.read())
+        except urllib.error.HTTPError as e:
+            text = e.read().decode()
+            # 429 (rate limit) and 5xx are retryable; back off and try again
+            if e.code in (429, 500, 502, 503, 529) and attempt < max_retries:
+                wait = min(_retry_delay(text, backoff), 65)
+                time.sleep(wait)
+                backoff *= 2
+                continue
+            raise ProviderError(f"HTTP {e.code}: {text[:300]}")
 
 
 def chat(provider, model=None, prompt="", system=None, max_tokens=512,
@@ -93,8 +110,9 @@ def chat(provider, model=None, prompt="", system=None, max_tokens=512,
                 "model": model}
 
     if provider == "anthropic":
+        # Newer Anthropic models (Sonnet 5, Opus 4.8, Fable 5) reject a non-default
+        # temperature with a 400, so we omit it and let the model use its default.
         payload = {"model": model, "max_tokens": max_tokens,
-                   "temperature": temperature,
                    "messages": [{"role": "user", "content": prompt}]}
         if system:
             payload["system"] = system
@@ -109,14 +127,22 @@ def chat(provider, model=None, prompt="", system=None, max_tokens=512,
 
     if provider == "gemini":
         url = _ENDPOINTS["gemini"].format(model=model) + f"?key={_key('gemini')}"
+        # thinkingBudget:0 turns off the 2.5 "thinking" phase so a small token
+        # budget yields a direct answer instead of being spent on hidden reasoning.
         payload = {"contents": [{"parts": [{"text": prompt}]}],
                    "generationConfig": {"maxOutputTokens": max_tokens,
-                                        "temperature": temperature}}
+                                        "temperature": temperature,
+                                        "thinkingConfig": {"thinkingBudget": 0}}}
         if system:
             payload["systemInstruction"] = {"parts": [{"text": system}]}
         body = _post(url, {"Content-Type": "application/json"}, payload, timeout)
-        cand = body["candidates"][0]
-        text = "".join(p.get("text", "") for p in cand["content"]["parts"])
+        cands = body.get("candidates", [])
+        if not cands:
+            raise ProviderError(f"gemini returned no candidates: {json.dumps(body)[:200]}")
+        # 2.5 models are "thinking" models; a candidate may lack content.parts
+        # (thinking-only turn, or a non-STOP finishReason). Handle gracefully.
+        parts = cands[0].get("content", {}).get("parts", []) or []
+        text = "".join(p.get("text", "") for p in parts)
         u = body.get("usageMetadata", {})
         return {"text": text, "tokens_in": u.get("promptTokenCount"),
                 "tokens_out": u.get("candidatesTokenCount"), "model": model}
@@ -133,10 +159,58 @@ def stream_chat(provider, model=None, prompt="", timeout=60, **kw):
     """
     provider = provider.lower()
     model = model or DEFAULT_MODELS[provider]
-    if provider not in ("openai", "grok"):
-        r = chat(provider, model, prompt, timeout=timeout, **kw)
-        yield r["text"], time.monotonic()
+
+    if provider == "anthropic":
+        # Real SSE streaming so TTFT is comparable with the OpenAI-style providers.
+        payload = {"model": model, "max_tokens": kw.get("max_tokens", 512),
+                   "stream": True,
+                   "messages": [{"role": "user", "content": prompt}]}
+        req = urllib.request.Request(
+            _ENDPOINTS["anthropic"], data=json.dumps(payload).encode(),
+            headers={"x-api-key": _key("anthropic"),
+                     "anthropic-version": "2023-06-01",
+                     "content-type": "application/json"}, method="POST")
+        with urllib.request.urlopen(req, timeout=timeout) as r:
+            for raw in r:
+                line = raw.decode().strip()
+                if not line.startswith("data:"):
+                    continue
+                try:
+                    ev = json.loads(line[5:].strip())
+                except json.JSONDecodeError:
+                    continue
+                if ev.get("type") == "content_block_delta":
+                    piece = ev.get("delta", {}).get("text", "")
+                    if piece:
+                        yield piece, time.monotonic()
         return
+
+    if provider == "gemini":
+        # Gemini streaming endpoint (SSE).
+        url = (_ENDPOINTS["gemini"].format(model=model)
+               .replace(":generateContent", ":streamGenerateContent")
+               + f"?alt=sse&key={_key('gemini')}")
+        payload = {"contents": [{"parts": [{"text": prompt}]}],
+                   "generationConfig": {"maxOutputTokens": kw.get("max_tokens", 512),
+                                        "thinkingConfig": {"thinkingBudget": 0}}}
+        req = urllib.request.Request(
+            url, data=json.dumps(payload).encode(),
+            headers={"content-type": "application/json"}, method="POST")
+        with urllib.request.urlopen(req, timeout=timeout) as r:
+            for raw in r:
+                line = raw.decode().strip()
+                if not line.startswith("data:"):
+                    continue
+                try:
+                    ev = json.loads(line[5:].strip())
+                except json.JSONDecodeError:
+                    continue
+                for c in ev.get("candidates", []):
+                    for p in c.get("content", {}).get("parts", []) or []:
+                        if p.get("text"):
+                            yield p["text"], time.monotonic()
+        return
+
     msgs = [{"role": "user", "content": prompt}]
     payload = {"model": model, "messages": msgs, "stream": True,
                "max_tokens": kw.get("max_tokens", 512)}

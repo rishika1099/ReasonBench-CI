@@ -1,5 +1,11 @@
 # ReasonBench CI
 
+> **These results are REAL.** Measured 2026-08-05 20:35 via live API calls against
+> **gpt-4o-mini, claude-haiku-4-5, grok-4.3** (24 verifiable reasoning tests x 2 runs across 6 categories). Reproduce with:
+> `set -a; source ../real-benchmark/keys.env; set +a && python3 run_real.py`
+> The original simulated runner is kept alongside for the zero-cost/no-key path.
+
+
 Regression testing for LLM reasoning, modeled on unit testing: declarative test specs,
 a runner, per-category reports, and model-version diffing so a CI pipeline can fail a
 deploy when reasoning quality regresses.

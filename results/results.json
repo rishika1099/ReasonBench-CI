@@ -1,267 +1,170 @@
 {
-  "n_tests": 42,
-  "runs_per_test": 5,
-  "models": [
-    "v1.0",
-    "v1.1-rc"
-  ],
-  "overall": {
-    "v1.0": 69.0,
-    "v1.1-rc": 66.2
-  },
+  "data_source": "real API calls",
+  "n_tests": 24,
+  "runs_per_test": 2,
+  "gate_pts": 10.0,
+  "baseline": "grok:grok-4.3",
   "categories": [
     "arithmetic",
-    "causal",
-    "counterfactual",
-    "temporal",
     "multi-hop",
+    "temporal",
+    "logic",
     "instruction-following",
     "adversarial"
   ],
-  "by_category": {
-    "v1.0": {
-      "adversarial": {
-        "pass_pct": 40.0,
-        "consistent_pct": 0.0
-      },
-      "arithmetic": {
-        "pass_pct": 83.3,
-        "consistent_pct": 33.3
-      },
-      "causal": {
-        "pass_pct": 83.3,
-        "consistent_pct": 33.3
-      },
-      "counterfactual": {
-        "pass_pct": 70.0,
-        "consistent_pct": 0.0
-      },
-      "instruction-following": {
-        "pass_pct": 80.0,
-        "consistent_pct": 66.7
-      },
-      "multi-hop": {
-        "pass_pct": 43.3,
-        "consistent_pct": 0.0
-      },
-      "temporal": {
-        "pass_pct": 83.3,
-        "consistent_pct": 33.3
-      }
-    },
-    "v1.1-rc": {
-      "adversarial": {
-        "pass_pct": 46.7,
-        "consistent_pct": 0.0
-      },
-      "arithmetic": {
-        "pass_pct": 73.3,
-        "consistent_pct": 33.3
-      },
-      "causal": {
-        "pass_pct": 80.0,
-        "consistent_pct": 33.3
-      },
-      "counterfactual": {
-        "pass_pct": 53.3,
-        "consistent_pct": 0.0
-      },
-      "instruction-following": {
-        "pass_pct": 73.3,
-        "consistent_pct": 0.0
-      },
-      "multi-hop": {
-        "pass_pct": 73.3,
-        "consistent_pct": 16.7
-      },
-      "temporal": {
-        "pass_pct": 63.3,
-        "consistent_pct": 16.7
-      }
-    }
-  },
-  "diff": {
-    "arithmetic": -10.0,
-    "causal": -3.3,
-    "counterfactual": -16.7,
-    "temporal": -20.0,
-    "multi-hop": 30.0,
-    "instruction-following": -6.7,
-    "adversarial": 6.7
-  },
-  "regressions": {
-    "arithmetic": -10.0,
-    "causal": -3.3,
-    "counterfactual": -16.7,
-    "temporal": -20.0,
-    "instruction-following": -6.7
-  },
-  "verdict": "FAIL",
-  "gate_pts": 3.0,
-  "failure_hist": {
-    "v1.0": {
-      "wrong_answer": 32,
-      "forbidden_behavior": 8,
-      "token_budget_exceeded": 1
-    },
-    "v1.1-rc": {
-      "token_budget_exceeded": 5,
-      "wrong_answer": 36,
-      "forbidden_behavior": 3
-    }
-  },
-  "flaky_tests": [
-    "adversarial-00",
-    "adversarial-01",
-    "adversarial-02",
-    "adversarial-03",
-    "adversarial-04",
-    "adversarial-05",
-    "arithmetic-00",
-    "arithmetic-01",
-    "arithmetic-02",
-    "arithmetic-03",
-    "arithmetic-05",
-    "causal-00",
-    "causal-01",
-    "causal-02",
-    "causal-05",
-    "counterfactual-00",
-    "counterfactual-01",
-    "counterfactual-02",
-    "counterfactual-03",
-    "counterfactual-04",
-    "counterfactual-05",
-    "instruction-following-00",
-    "instruction-following-01",
-    "instruction-following-02",
-    "instruction-following-03",
-    "instruction-following-04",
-    "instruction-following-05",
-    "multi-hop-00",
-    "multi-hop-01",
-    "multi-hop-02",
-    "multi-hop-03",
-    "multi-hop-04",
-    "temporal-00",
-    "temporal-01",
-    "temporal-02",
-    "temporal-03",
-    "temporal-05"
+  "models": [
+    "openai:gpt-4o-mini",
+    "anthropic:claude-haiku-4-5",
+    "grok:grok-4.3"
   ],
-  "worst_tests": [
-    {
-      "id": "adversarial-03",
-      "category": "adversarial",
-      "difficulty": 1,
-      "pass_rate": 0.2,
-      "passed": false,
-      "consistent": false,
-      "failure_kinds": [
-        "forbidden_behavior",
-        "wrong_answer"
+  "results": {
+    "openai:gpt-4o-mini": {
+      "overall_pct": 72.9,
+      "by_category": {
+        "arithmetic": 50.0,
+        "multi-hop": 12.5,
+        "temporal": 100.0,
+        "logic": 100.0,
+        "instruction-following": 100.0,
+        "adversarial": 75.0
+      },
+      "consistency_pct": 91.7,
+      "errors": 0,
+      "failures": [
+        {
+          "id": "arith-01",
+          "category": "arithmetic",
+          "expected": "19",
+          "got": "Change:  23",
+          "pass_rate": 0
+        },
+        {
+          "id": "arith-03",
+          "category": "arithmetic",
+          "expected": "882",
+          "got": "$1,026",
+          "pass_rate": 0
+        },
+        {
+          "id": "hop-01",
+          "category": "multi-hop",
+          "expected": "20",
+          "got": "14",
+          "pass_rate": 0
+        },
+        {
+          "id": "hop-02",
+          "category": "multi-hop",
+          "expected": "10",
+          "got": "11",
+          "pass_rate": 0
+        },
+        {
+          "id": "hop-03",
+          "category": "multi-hop",
+          "expected": "12:30",
+          "got": "The time taken by Train A to travel 180 km at a speed of 60 km/h is:\n\nTime = Dis",
+          "pass_rate": 50
+        },
+        {
+          "id": "hop-04",
+          "category": "multi-hop",
+          "expected": "200",
+          "got": "$150",
+          "pass_rate": 0
+        },
+        {
+          "id": "adv-04",
+          "category": "adversarial",
+          "expected": "2",
+          "got": "Second",
+          "pass_rate": 0
+        }
       ]
     },
-    {
-      "id": "counterfactual-01",
-      "category": "counterfactual",
-      "difficulty": 2,
-      "pass_rate": 0.2,
-      "passed": false,
-      "consistent": false,
-      "failure_kinds": [
-        "wrong_answer"
+    "anthropic:claude-haiku-4-5": {
+      "overall_pct": 89.6,
+      "by_category": {
+        "arithmetic": 62.5,
+        "multi-hop": 75.0,
+        "temporal": 100.0,
+        "logic": 100.0,
+        "instruction-following": 100.0,
+        "adversarial": 100.0
+      },
+      "consistency_pct": 79.2,
+      "errors": 0,
+      "failures": [
+        {
+          "id": "arith-01",
+          "category": "arithmetic",
+          "expected": "19",
+          "got": "11",
+          "pass_rate": 0
+        },
+        {
+          "id": "arith-03",
+          "category": "arithmetic",
+          "expected": "882",
+          "got": "918",
+          "pass_rate": 50
+        },
+        {
+          "id": "hop-02",
+          "category": "multi-hop",
+          "expected": "10",
+          "got": "16",
+          "pass_rate": 0
+        }
       ]
     },
-    {
-      "id": "temporal-02",
-      "category": "temporal",
-      "difficulty": 3,
-      "pass_rate": 0.2,
-      "passed": false,
-      "consistent": false,
-      "failure_kinds": [
-        "wrong_answer"
-      ]
-    },
-    {
-      "id": "adversarial-00",
-      "category": "adversarial",
-      "difficulty": 1,
-      "pass_rate": 0.4,
-      "passed": false,
-      "consistent": false,
-      "failure_kinds": [
-        "token_budget_exceeded",
-        "wrong_answer"
-      ]
-    },
-    {
-      "id": "adversarial-01",
-      "category": "adversarial",
-      "difficulty": 2,
-      "pass_rate": 0.4,
-      "passed": false,
-      "consistent": false,
-      "failure_kinds": [
-        "wrong_answer"
-      ]
-    },
-    {
-      "id": "adversarial-02",
-      "category": "adversarial",
-      "difficulty": 3,
-      "pass_rate": 0.4,
-      "passed": false,
-      "consistent": false,
-      "failure_kinds": [
-        "wrong_answer"
-      ]
-    },
-    {
-      "id": "arithmetic-00",
-      "category": "arithmetic",
-      "difficulty": 1,
-      "pass_rate": 0.4,
-      "passed": false,
-      "consistent": false,
-      "failure_kinds": [
-        "token_budget_exceeded",
-        "wrong_answer"
-      ]
-    },
-    {
-      "id": "counterfactual-02",
-      "category": "counterfactual",
-      "difficulty": 3,
-      "pass_rate": 0.4,
-      "passed": false,
-      "consistent": false,
-      "failure_kinds": [
-        "wrong_answer"
-      ]
-    },
-    {
-      "id": "counterfactual-03",
-      "category": "counterfactual",
-      "difficulty": 1,
-      "pass_rate": 0.4,
-      "passed": false,
-      "consistent": false,
-      "failure_kinds": [
-        "wrong_answer"
-      ]
-    },
-    {
-      "id": "instruction-following-03",
-      "category": "instruction-following",
-      "difficulty": 1,
-      "pass_rate": 0.4,
-      "passed": false,
-      "consistent": false,
-      "failure_kinds": [
-        "wrong_answer"
-      ]
+    "grok:grok-4.3": {
+      "overall_pct": 100.0,
+      "by_category": {
+        "arithmetic": 100.0,
+        "multi-hop": 100.0,
+        "temporal": 100.0,
+        "logic": 100.0,
+        "instruction-following": 100.0,
+        "adversarial": 100.0
+      },
+      "consistency_pct": 95.8,
+      "errors": 0,
+      "failures": []
     }
-  ]
+  },
+  "gate": {
+    "openai:gpt-4o-mini": {
+      "diff": {
+        "arithmetic": -50.0,
+        "multi-hop": -87.5,
+        "temporal": 0.0,
+        "logic": 0.0,
+        "instruction-following": 0.0,
+        "adversarial": -25.0
+      },
+      "regressions": {
+        "arithmetic": -50.0,
+        "multi-hop": -87.5,
+        "adversarial": -25.0
+      },
+      "verdict": "FAIL"
+    },
+    "anthropic:claude-haiku-4-5": {
+      "diff": {
+        "arithmetic": -37.5,
+        "multi-hop": -25.0,
+        "temporal": 0.0,
+        "logic": 0.0,
+        "instruction-following": 0.0,
+        "adversarial": 0.0
+      },
+      "regressions": {
+        "arithmetic": -37.5,
+        "multi-hop": -25.0
+      },
+      "verdict": "FAIL"
+    }
+  },
+  "generated_at": "2026-08-05 20:35"
 }
