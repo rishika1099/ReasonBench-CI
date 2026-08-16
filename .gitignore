@@ -4,3 +4,7 @@ __pycache__/
 .ipynb_checkpoints/
 .venv/
 env/
+
+# simulated-run artifacts (real results live in results/results.json)
+results/simulated.json
+dashboard/data_simulated.js

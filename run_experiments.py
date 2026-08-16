@@ -1,3 +1,7 @@
+"""NOTE: this is the SIMULATED runner. It writes to results/simulated.json
+and dashboard/data_simulated.js so it can never overwrite the real
+measurements produced by run_real.py (results/results.json, dashboard/data.js).
+"""
 """Run the suite on baseline and candidate models, diff them, emit CI verdict."""
 
 import json
@@ -66,9 +70,9 @@ def main():
         "worst_tests": sorted(res_c, key=lambda r: r["pass_rate"])[:10],
     }
 
-    with open(os.path.join(HERE, "results", "results.json"), "w") as f:
+    with open(os.path.join(HERE, "results", "simulated.json"), "w") as f:
         json.dump(data, f, indent=2)
-    with open(os.path.join(HERE, "dashboard", "data.js"), "w") as f:
+    with open(os.path.join(HERE, "dashboard", "data_simulated.js"), "w") as f:
         f.write("window.DATA = " + json.dumps(data) + ";\n")
 
     print(f"suite: {len(tests)} tests x {tests[0]['runs']} runs")

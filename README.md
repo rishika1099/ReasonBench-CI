@@ -48,13 +48,20 @@ Tests live in `tests/<category>/*.json`:
 
 ## Run
 
+Real measurement (what the dashboard shows):
+
 ```bash
-python3 run_experiments.py
+set -a; source ../real-benchmark/keys.env; set +a
+python3 run_real.py
 open dashboard/index.html
 ```
 
-Exit code is nonzero if the candidate version regresses more than 3 points on any
-category, which is the CI gate.
+Simulated path (no key, no cost). It writes to `results/simulated.json` and
+`dashboard/data_simulated.js`, so it cannot overwrite the real results:
+
+```bash
+python3 run_experiments.py
+```
 
 ## Evaluate against a real model
 
